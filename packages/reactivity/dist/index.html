@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <script src="./reactivity.global.js"></script>
+  <div id="app"></div>
+  <script>
+    const {effect,reactive} =VueReactivity
+    const data={name:'ysf',age:18}
+    const state=reactive(data)
+    const state1=reactive(state)
+    effect(()=>{
+      document.getElementById('app').innerHTML=state.name+state.age
+      state.age++
+    })
+    setTimeout(()=>{
+        state.age++
+        state.name='张三'
+      },1000)
+    state.name
+    console.log(state==state1)
+    console.log(state)
+  </script>
+</body>
+</html>

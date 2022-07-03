@@ -1,0 +1,3 @@
+# 配置packages目录表示packages目录下都是包
+packages:
+  - 'packages/*'
