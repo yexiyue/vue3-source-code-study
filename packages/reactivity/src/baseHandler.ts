@@ -1,3 +1,5 @@
+import { isObject } from "@vue/shared"
+import { reactive } from "./reactive"
 import {track,trigger} from "./effect"
 export const enum ReactiveFlags {
   IS_REACTIVE='__v_isReactive'
@@ -14,7 +16,14 @@ export const mutableHandlers={
       return true
     }
     track(target,'get',prop)
-    return Reflect.get(target,prop,receiver)
+    //取值操作
+    let res=Reflect.get(target,prop,receiver)
+
+    if(isObject(res)){
+      return reactive(res);//深度代理，性能也好，只有当取值的时候才做代理，不取就不代理
+    }
+
+    return res
   },
   set(target,prop,value,receiver){
     //先比对一下是否要更新

@@ -14,37 +14,22 @@
     const state=reactive({
       flag:true,
       name:'张三',
-      age:18,
-      address:{
-        num:20
-      }
+      age:18
     })
-    let waiting=false
     //返回runner
     let runner=effect(()=>{
       console.log('render')
       document.getElementById('app').innerHTML=state.age
-    },{
-      scheduler(){
-        console.log('run')
-        if(!waiting){
-          waiting=true
-          setTimeout(()=>{
-            runner()
-            
-            waiting=false
-          },1000)
-        }
-      }
     })
-    console.log(state.address)
-    state.age=1000
-    state.age=2000
-    state.age=3000
-    state.age=4000
-    state.age=5000
-
     //手动停止更新
+    runner.effect.stop()
+    setTimeout(()=>{
+      state.age=1000
+      setTimeout(()=>{
+        //手动调用更新
+        runner()
+      },1000)
+    },1000)
   </script>
 </body>
 </html>
