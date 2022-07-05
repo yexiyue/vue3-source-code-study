@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="./reactivity.global.js"></script>
+  <script>
+    const {effect,reactive,computed} =VueReactivity
+    const state=reactive({
+      firstName:'叶',
+      lastName:'龙'
+    })
+    const res=computed(()=>{
+      return state.firstName+state.lastName
+    })
+    /* document.getElementById('app').innerHTML=res.value */
+    effect(()=>{
+      document.getElementById('app').innerHTML=res.value
+    })
+    setTimeout(()=>{
+      state.firstName='张三'
+    },3000)
+    console.log(res)
+  </script>
+</body>
+</html>

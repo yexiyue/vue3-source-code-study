@@ -27,3 +27,8 @@ export function reactive(target: Record<PropertyKey, any>) {
   reactiveMap.set(target, proxy)
   return proxy
 }
+
+//判断响应式方法
+export function isReactive(value){
+  return !!(value && value[ReactiveFlags.IS_REACTIVE]);//两个取反 转成Boolean
+}

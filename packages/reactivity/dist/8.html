@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Document</title>
+</head>
+<body>
+  <div id="app"></div>
+  <script src="./reactivity.global.js"></script>
+  <script>
+    const {effect,reactive,computed,watch} =VueReactivity
+    const state=reactive({
+      firstName:'叶',
+      lastName:'龙'
+    })
+    watch(()=>state.lastName,(newValue,oldValue,onInvalidate)=>{
+      console.log(newValue,oldValue)
+      onInvalidate(()=>{
+        console.log('12345------')
+      })
+    })
+    state.lastName='1'
+    state.lastName='2'
+    state.lastName='3'
+    state.lastName='4'
+    state.lastName='5'
+  </script>
+</body>
+</html>
