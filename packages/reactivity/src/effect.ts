@@ -14,13 +14,15 @@ function clearupEffect(effect:ReactiveEffect){
   }
   effect.deps.length=0
 }
-
+type Fn={
+  ():any
+}
 //解决fn里面嵌套effect activeEffect找不到问题用树形结构，以前用栈
 export class ReactiveEffect {
   public active:boolean=true;//默认是激活状态
   public parent:ReactiveEffect=null;//树形父节点
   public deps:Set<ReactiveEffect>[]=[];//记录被那些属性收集过
-  constructor(public fn:()=>void,public scheduler?:()=>void){}
+  constructor(public fn:Fn,public scheduler?:()=>void){}
   run(){ //run就是执行effect
     if(!this.active){
       return this.fn();//如果是非激活状态则执行函数，不需要进行依赖收集
@@ -32,7 +34,7 @@ export class ReactiveEffect {
 
       //这里我们需要在执行用户函数之前清理依赖
       clearupEffect(this)
-      this.fn();//当稍后调用取值操作的时候，就可以获取到这个全局变量的activeEffect
+      return this.fn();//当稍后调用取值操作的时候，就可以获取到这个全局变量的activeEffect
     }finally{
       //给他还回去
       activeEffect=this.parent
@@ -54,9 +56,9 @@ type EffectOptions={
   scheduler:()=>void
 }
 //目标是让fn的依赖更新后fn重新执行
-export function effect(fn:()=>void,options?:EffectOptions){
+export function effect(fn:Fn,options?:EffectOptions){
   //这里的fn可以根据状态变化重新执行，effect可以嵌套着写
-  const _effect=new ReactiveEffect(fn,options.scheduler); //创建响应式effect
+  const _effect=new ReactiveEffect(fn,options?.scheduler); //创建响应式effect
 
   _effect.run();//默认先执行一次
 
@@ -90,12 +92,18 @@ export function track<T extends Record<PropertyKey, any>>(target:T,type:'get'|'s
   if(!dep){
     depsMap.set(key,(dep=new Set()))
   }
-  //有就不用收集了,性能优化，明知道不用放进去何必让他自己去重
-  let shouldTrack=!dep.has(activeEffect);
-  if(shouldTrack){
-    dep.add(activeEffect);
-    // dep就是属性对应的set里面保存的effect到时候清理直接删除set里的effect就完事
-    activeEffect.deps.push(dep);//让effect记录dep属性就是上面的(name) <Set>[],稍后清理会用到
+  trackEffect(dep)
+}
+
+export function trackEffect(dep:Set<ReactiveEffect>){
+  if(activeEffect){
+    //有就不用收集了,性能优化，明知道不用放进去何必让他自己去重
+    let shouldTrack=!dep.has(activeEffect);
+    if(shouldTrack){
+      dep.add(activeEffect);
+      // dep就是属性对应的set里面保存的effect到时候清理直接删除set里的effect就完事
+      activeEffect.deps.push(dep);//让effect记录dep属性就是上面的(name) <Set>[],稍后清理会用到
+    }
   }
 }
 /**
@@ -112,7 +120,12 @@ export function trigger<T extends Record<PropertyKey,any>>(target:T,type:'get'|'
 
   //永远在执行之前 先拷贝一份，不要关联引用
   if(effects){
-    effects=new Set(effects)
+    triggerEffect(effects)
+  }
+}
+
+export function triggerEffect(effects:Set<ReactiveEffect>){
+  effects=new Set(effects)
     effects.forEach(effect=>{
       //只有不是当前全局的effect才调用
       if(effect!==activeEffect){
@@ -123,5 +136,4 @@ export function trigger<T extends Record<PropertyKey,any>>(target:T,type:'get'|'
         }
       }
     })
-  }
 }

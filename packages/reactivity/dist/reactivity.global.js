@@ -50,7 +50,7 @@ var VueReactivity = (() => {
         this.parent = activeEffect;
         activeEffect = this;
         clearupEffect(this);
-        this.fn();
+        return this.fn();
       } finally {
         activeEffect = this.parent;
         this.parent = null;
@@ -64,7 +64,7 @@ var VueReactivity = (() => {
     }
   };
   function effect(fn, options) {
-    const _effect = new ReactiveEffect(fn, options.scheduler);
+    const _effect = new ReactiveEffect(fn, options == null ? void 0 : options.scheduler);
     _effect.run();
     const runner = _effect.run.bind(_effect);
     runner.effect = _effect;
@@ -82,10 +82,15 @@ var VueReactivity = (() => {
     if (!dep) {
       depsMap.set(key, dep = /* @__PURE__ */ new Set());
     }
-    let shouldTrack = !dep.has(activeEffect);
-    if (shouldTrack) {
-      dep.add(activeEffect);
-      activeEffect.deps.push(dep);
+    trackEffect(dep);
+  }
+  function trackEffect(dep) {
+    if (activeEffect) {
+      let shouldTrack = !dep.has(activeEffect);
+      if (shouldTrack) {
+        dep.add(activeEffect);
+        activeEffect.deps.push(dep);
+      }
     }
   }
   function trigger(target, type, key, value, oldValue) {
@@ -94,17 +99,20 @@ var VueReactivity = (() => {
       return;
     let effects = depsMap.get(key);
     if (effects) {
-      effects = new Set(effects);
-      effects.forEach((effect2) => {
-        if (effect2 !== activeEffect) {
-          if (effect2.scheduler) {
-            effect2.scheduler();
-          } else {
-            effect2.run();
-          }
-        }
-      });
+      triggerEffect(effects);
     }
+  }
+  function triggerEffect(effects) {
+    effects = new Set(effects);
+    effects.forEach((effect2) => {
+      if (effect2 !== activeEffect) {
+        if (effect2.scheduler) {
+          effect2.scheduler();
+        } else {
+          effect2.run();
+        }
+      }
+    });
   }
 
   // packages/shared/src/index.ts
@@ -121,8 +129,27 @@ var VueReactivity = (() => {
     constructor(getter, setter) {
       this.getter = getter;
       this.setter = setter;
-      new ReactiveEffect(getter, () => {
+      this._dirty = true;
+      this._v_isReadonly = true;
+      this._v_isRef = true;
+      this.dep = /* @__PURE__ */ new Set();
+      this.effect = new ReactiveEffect(getter, () => {
+        if (!this._dirty) {
+          this._dirty = true;
+          triggerEffect(this.dep);
+        }
       });
+    }
+    get value() {
+      trackEffect(this.dep);
+      if (this._dirty) {
+        this._dirty = false;
+        this._value = this.effect.run();
+      }
+      return this._value;
+    }
+    set value(newValue) {
+      this.setter(newValue);
     }
   };
   var computed = (getterOrOptions) => {
