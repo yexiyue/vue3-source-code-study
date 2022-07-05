@@ -17,9 +17,7 @@
     })
     watch(()=>state.lastName,(newValue,oldValue,onInvalidate)=>{
       console.log(newValue,oldValue)
-      onInvalidate(()=>{
-        console.log('12345------')
-      })
+      
     })
     state.lastName='1'
     state.lastName='2'
