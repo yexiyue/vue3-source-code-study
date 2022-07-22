@@ -1,12 +1,11 @@
 {
-  "name": "@vue/reactivity",
+  "name": "@vue/runtime-core",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "buildOptions": {
-    "name": "VueReactivity",
+    "name": "VueRuntimeCORE",
     "formats": [
-      "global",
       "cjs",
       "esm-bundler"
     ]
